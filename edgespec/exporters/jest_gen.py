@@ -24,11 +24,12 @@ class JestExporter:
         json_str = json.dumps(cases_json, indent=2)
 
         return f"""/**
- * EdgeSpec Automated Contract & Boundary Test Suite
- * Generated for Jest / Vitest / Playwright
+ * EdgeSpec API test starter.
+ * Set EDGESPEC_TARGET_URL, then customize request construction and assertions
+ * for your application's contract.
  */
 
-import {{ describe, it, expect }} from 'vitest';
+import {{ describe, test, expect }} from 'vitest';
 
 interface EdgeTestCase {{
   id: string;
@@ -41,24 +42,21 @@ interface EdgeTestCase {{
 }}
 
 const testCases: EdgeTestCase[] = {json_str};
+const targetUrl = process.env.EDGESPEC_TARGET_URL;
+const integrationTest = targetUrl ? test : test.skip;
 
 describe('EdgeSpec Automated Verification Matrix', () => {{
-  test.each(testCases)(
+  integrationTest.each(testCases)(
     '[$severity] $param: $title',
     async ({{ id, param, payload, expected }}) => {{
-      // Example payload injection
       const requestBody = {{ [param]: payload }};
+      const response = await fetch(targetUrl!, {{
+        method: 'POST',
+        headers: {{ 'Content-Type': 'application/json' }},
+        body: JSON.stringify(requestBody),
+      }});
 
-      // Replace with your real API client or service call:
-      // const response = await fetch('/api/endpoint', {{
-      //   method: 'POST',
-      //   headers: {{ 'Content-Type': 'application/json' }},
-      //   body: JSON.stringify(requestBody),
-      // }});
-      // expect(response.status).toBeDefined();
-
-      expect(id).toBeDefined();
-      expect(param).toBeDefined();
+      expect(response.status, `${{id}}; review expected outcome: ${{expected}}`).toBeLessThan(500);
     }}
   );
 }});

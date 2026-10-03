@@ -1,4 +1,4 @@
-import { AnalysisReport } from '../types';
+import type { AnalysisReport } from '../types.ts';
 
 export function exportToMarkdown(report: AnalysisReport): string {
   const lines: string[] = [
@@ -72,38 +72,39 @@ export function exportToPytest(report: AnalysisReport): string {
   }));
 
   return `\"\"\"
-Automated Boundary & Security Edge Case Test Suite
-Generated automatically by EdgeSpec Engine.
+EdgeSpec API test starter.
+
+Set EDGESPEC_TARGET_URL to enable the integration requests, then customize
+the request construction and assertions for your application's contract.
 \"\"\"
 
+import json
+import os
 import pytest
 import requests
 
-API_BASE_URL = "http://localhost:8000"
+TARGET_URL = os.getenv("EDGESPEC_TARGET_URL")
 
-TEST_CASES = ${JSON.stringify(casesJson, null, 4)}
+TEST_CASES = json.loads(r'''${JSON.stringify(casesJson, null, 2)}''')
 
 @pytest.mark.parametrize("case", TEST_CASES, ids=lambda c: f"{c['param']}_{c['id']}")
 def test_edgespec_contract(case):
-    \"\"\"
-    Verifies that the target endpoint correctly handles the synthesized test vector.
-    \"\"\"
+    if not TARGET_URL:
+        pytest.skip("Set EDGESPEC_TARGET_URL to run generated API tests")
+
     param_name = case["param"]
     payload_val = case["payload"]
-
-    # Construct request payload
     payload = {param_name: payload_val}
 
-    # Example endpoint call (replace with your real test client):
-    # response = requests.post(f"{API_BASE_URL}/api/endpoint", json=payload)
-    # assert response.status_code in [200, 400, 409, 413, 422]
-
-    assert case["id"] is not None
-    assert param_name is not None
+    response = requests.post(TARGET_URL, json=payload, timeout=10)
+    assert response.status_code < 500, (
+        f"{case['id']} triggered server error {response.status_code}; "
+        f"review expected outcome: {case['expected_status']}"
+    )
 `;
 }
 
-export function exportToJest(report: AnalysisReport): string {
+export function exportToVitest(report: AnalysisReport): string {
   const casesJson = report.testCases.map((tc) => ({
     id: tc.id,
     param: tc.targetParam,
@@ -115,11 +116,12 @@ export function exportToJest(report: AnalysisReport): string {
   }));
 
   return `/**
- * EdgeSpec Automated Contract & Boundary Test Suite
- * Generated for Jest / Vitest / Playwright
+ * EdgeSpec API test starter.
+ * Set EDGESPEC_TARGET_URL, then customize request construction and assertions
+ * for your application's contract.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, test, expect } from 'vitest';
 
 interface EdgeTestCase {
   id: string;
@@ -132,24 +134,21 @@ interface EdgeTestCase {
 }
 
 const testCases: EdgeTestCase[] = ${JSON.stringify(casesJson, null, 2)};
+const targetUrl = process.env.EDGESPEC_TARGET_URL;
+const integrationTest = targetUrl ? test : test.skip;
 
 describe('EdgeSpec Automated Verification Matrix', () => {
-  test.each(testCases)(
+  integrationTest.each(testCases)(
     '[$severity] $param: $title',
     async ({ id, param, payload, expected }) => {
-      // Example payload injection
       const requestBody = { [param]: payload };
+      const response = await fetch(targetUrl!, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
 
-      // Example integration call:
-      // const response = await fetch('/api/endpoint', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(requestBody),
-      // });
-      // expect(response.status).toBeDefined();
-
-      expect(id).toBeDefined();
-      expect(param).toBeDefined();
+      expect(response.status, id + '; review expected outcome: ' + expected).toBeLessThan(500);
     }
   );
 });
@@ -169,7 +168,7 @@ export function exportToCurl(report: AnalysisReport, baseUrl = 'http://localhost
 
   report.testCases.forEach((tc, idx) => {
     const payloadDict = { [tc.targetParam]: tc.payload };
-    const jsonPayload = JSON.stringify(payloadDict);
+    const jsonPayload = JSON.stringify(payloadDict).replace(/'/g, `'"'"'`);
     lines.push(
       `# [${idx + 1}/${report.testCases.length}] ${tc.severity.toUpperCase()} - ${tc.title}`,
       `# Expected: ${tc.expectedStatus}`,

@@ -1,0 +1,26 @@
+[
+  {
+    "name": "json schema subset",
+    "input": "{\"type\":\"object\",\"required\":[\"age\"],\"properties\":{\"age\":{\"type\":\"integer\",\"minimum\":18,\"maximum\":65},\"email\":{\"type\":\"string\",\"format\":\"email\"}}}",
+    "format": "json_schema",
+    "parameters": ["age", "email"]
+  },
+  {
+    "name": "structured api notes",
+    "input": "POST /api/users\n- age: integer (required, min: 18, max: 65)\n- nickname: string (optional, max length: 40 chars)",
+    "format": "api_spec",
+    "parameters": ["age", "nickname"]
+  },
+  {
+    "name": "gherkin scenario",
+    "input": "Feature: Checkout\nScenario: Submit cart\nGiven a customer with ID \"cust_1\"\nWhen the customer submits quantity 2",
+    "format": "gherkin",
+    "parameters": ["quantity", "customerId"]
+  },
+  {
+    "name": "user story heuristics",
+    "input": "A user transfers between $10.00 and $2,500.00 to a verified email address.",
+    "format": "user_story",
+    "parameters": ["transferAmount", "recipientEmail"]
+  }
+]

@@ -44,8 +44,14 @@ class EdgeSpecEngine:
             if Category.SECURITY in enabled_categories:
                 test_cases.extend(SecurityEngine.generate(param))
 
-            if Category.CONCURRENCY in enabled_categories:
-                test_cases.extend(ConcurrencyEngine.generate(param))
+        # Concurrency scenarios apply to the request as a whole. Generate them
+        # once and associate them with an idempotency field when one exists.
+        if Category.CONCURRENCY in enabled_categories and parameters:
+            concurrency_target = next(
+                (p for p in parameters if "idempotency" in p.name.lower()),
+                parameters[0],
+            )
+            test_cases.extend(ConcurrencyEngine.generate(concurrency_target))
 
         # Metrics calculation
         critical_count = sum(1 for tc in test_cases if tc.severity == Severity.CRITICAL)

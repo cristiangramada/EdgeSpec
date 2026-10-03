@@ -1,16 +1,12 @@
 import React from 'react';
-import { ShieldCheck, Github, Download, Sparkles, BookOpen } from 'lucide-react';
+import { ShieldCheck, BookOpen } from 'lucide-react';
 
 interface HeaderProps {
-  onOpenGitHubModal: () => void;
-  onDownloadZip: () => void;
   onOpenExportModal: () => void;
   hasResults: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  onOpenGitHubModal,
-  onDownloadZip,
   onOpenExportModal,
   hasResults,
 }) => {
@@ -28,11 +24,11 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="flex items-center space-x-2">
               <span className="font-bold text-lg text-slate-100 tracking-tight">EdgeSpec</span>
               <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">
-                v1.0 • Multi-Engine
+                v1.0 • Local analysis
               </span>
             </div>
             <p className="text-xs text-slate-400 hidden sm:block">
-              Technical Boundary & OWASP Edge-Case Synthesis Engine
+              Rule-based test-design assistant
             </p>
           </div>
         </div>
@@ -43,30 +39,13 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onOpenExportModal}
               className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition"
-              title="Export as Markdown, Jira, Pytest, or Jest"
+              title="Export Markdown, Jira, starter tests, cURL, or JSON"
             >
               <BookOpen className="w-3.5 h-3.5 text-sky-400" />
               <span>Export Matrix</span>
             </button>
           )}
 
-          <button
-            onClick={onDownloadZip}
-            className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition"
-            title="Download full project archive with Python CLI and Tests"
-          >
-            <Download className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="hidden sm:inline">Download ZIP</span>
-          </button>
-
-          <button
-            onClick={onOpenGitHubModal}
-            className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white shadow-md shadow-indigo-500/25 transition active:scale-95 cursor-pointer"
-          >
-            <Github className="w-4 h-4" />
-            <span>Push to GitHub</span>
-            <Sparkles className="w-3 h-3 text-amber-300" />
-          </button>
         </div>
       </div>
     </header>

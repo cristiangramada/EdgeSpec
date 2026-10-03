@@ -53,7 +53,7 @@ const CATEGORY_CONFIG: {
   },
   {
     key: 'security',
-    label: 'OWASP Top 10 Security',
+    label: 'Security Payloads',
     icon: ShieldAlert,
     color: 'text-rose-400',
     bgActive: 'bg-rose-950/40 text-rose-200',
@@ -84,9 +84,9 @@ export const SpecEditor: React.FC<SpecEditorProps> = ({
   const getFormatBadge = () => {
     switch (detectedFormat) {
       case 'json_schema':
-        return { label: 'JSON Schema (draft-07)', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' };
+        return { label: 'JSON Schema (subset)', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' };
       case 'api_spec':
-        return { label: 'REST API Endpoint', color: 'bg-sky-500/10 text-sky-400 border-sky-500/30' };
+        return { label: 'Structured API Notes', color: 'bg-sky-500/10 text-sky-400 border-sky-500/30' };
       case 'gherkin':
         return { label: 'Gherkin BDD Scenario', color: 'bg-purple-500/10 text-purple-400 border-purple-500/30' };
       default:
@@ -143,7 +143,7 @@ export const SpecEditor: React.FC<SpecEditorProps> = ({
         <textarea
           value={specText}
           onChange={(e) => onChangeSpecText(e.target.value)}
-          placeholder="Paste your PRD user story, BDD acceptance criteria, OpenAPI endpoint, or JSON schema here..."
+          placeholder="Paste a user story, Gherkin scenario, JSON Schema, or structured API notes here..."
           rows={11}
           className="w-full bg-slate-950/80 rounded-xl border border-slate-800/80 p-3.5 text-xs sm:text-sm font-mono text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/60 transition resize-y leading-relaxed shadow-inner"
         />

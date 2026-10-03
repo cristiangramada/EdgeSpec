@@ -197,7 +197,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ report, onOpenExportMo
             <option value="all">All Categories</option>
             <option value="boundary">Boundary Conditions</option>
             <option value="type_fuzz">Type Fuzzing</option>
-            <option value="security">Security / OWASP</option>
+            <option value="security">Security payloads</option>
             <option value="concurrency">Concurrency & State</option>
           </select>
 

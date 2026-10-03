@@ -1,171 +1,140 @@
-# EdgeSpec ⚡
-### Automated Technical Test & Boundary Case Synthesis Engine
+# EdgeSpec
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
-[![TypeScript](https://img.shields.io/badge/typescript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![React 19](https://img.shields.io/badge/react-19-61dafb.svg)](https://react.dev/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![CI](https://img.shields.io/badge/CI-Passing-brightgreen.svg)]()
+EdgeSpec is a deterministic, rule-based test-design assistant. It turns lightweight software specifications into a reviewable matrix of boundary cases, malformed inputs, selected security payloads, and request-level concurrency scenarios.
 
-> **EdgeSpec** analyzes feature descriptions, BDD Gherkin scenarios, and JSON schemas to synthesize exact, categorized technical test inputs (boundary conditions, invalid data types, OWASP Top 10 vulnerabilities, and concurrency race conditions) to catch edge-case bugs before code ships.
+The project includes a local React dashboard and a standalone Python CLI. It does not use a language model, send specifications to a server, scan source code, or claim to prove that an application is secure.
 
----
+## What it does
 
-## 🏗️ Architecture Overview
+EdgeSpec accepts four lightweight input styles:
 
-```
-                      ┌────────────────────────────────────────┐
-                      │   Feature Specification Input          │
-                      │ (User Story / Gherkin / JSON / API)    │
-                      └──────────────────┬─────────────────────┘
-                                         │
-                                         ▼
-                      ┌────────────────────────────────────────┐
-                      │       Multi-Format Spec Parser         │
-                      │  (Entity & Constraint Extraction)      │
-                      └──────────────────┬─────────────────────┘
-                                         │
-         ┌──────────────────┬────────────┴───────┬──────────────────┐
-         ▼                  ▼                    ▼                  ▼
-┌─────────────────┐┌─────────────────┐┌──────────────────┐┌──────────────────┐
-│ Boundary Engine ││   Type Fuzzer   ││ Security Engine  ││Concurrency Engine│
-│ • Off-by-one    ││ • Null/Undefined││ • OWASP Top 10   ││ • Double Submit  │
-│ • INT32/64 wrap ││ • Type Juggling ││ • SQLi / NoSQLi  ││ • Idempotency Key│
-│ • Float epsilon ││ • Unicode traps ││ • XSS / SSRF     ││ • State Machine  │
-│ • Buffer limits ││ • Y2038 epoch   ││ • Path Traversal ││ • TOCTOU Race    │
-└────────┬────────┘└────────┬────────┘└────────┬─────────┘└────────┬─────────┘
-         │                  │                    │                 │
-         └──────────────────┴────────────┬───────┴─────────────────┘
-                                         │
-                                         ▼
-                      ┌────────────────────────────────────────┐
-                      │   Categorized Test Vector Matrix       │
-                      │ (Target, Severity, Payloads, Expected) │
-                      └──────────────────┬─────────────────────┘
-                                         │
-       ┌────────────────┬────────────────┼────────────────┬────────────────┐
-       ▼                ▼                ▼                ▼                ▼
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│  Markdown   │  │    Jira     │  │   Pytest    │  │ Jest/Vitest │  │    cURL     │
-│ Checklists  │  │ Wiki Tables │  │ Parametrize │  │ TypeScript  │  │    Bash     │
-└─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘
-```
+- User stories and acceptance criteria recognized through documented keyword heuristics
+- Gherkin scenarios containing common checkout concepts
+- A useful subset of flat JSON Schema properties and constraints
+- Structured API notes with parameter bullets such as `- age: integer (min: 18, max: 65)`
 
----
+It then suggests cases from four categories:
 
-## 🎯 The Four Verification Engines
+- **Boundary:** exact limits, just outside limits, zero, negative values, numeric overflow, and oversized strings or files
+- **Type and format:** null, omitted values, type coercion, malformed email addresses, Unicode edge cases, and date overflow
+- **Security payloads:** selected SQL injection, XSS, path traversal, SSRF, and mass-assignment review inputs
+- **Concurrency and state:** double submission, idempotency replay or collision, and invalid state transitions
 
-### 1. 📐 Boundary Conditions (`BoundaryEngine`)
-- **Fencepost & Off-by-One:** Mathematical $min-1$, $min$, $min+1$, $max-1$, $max$, and $max+1$ test bounds.
-- **Arithmetic Limits:** Signed 32-bit (`2,147,483,648`) and 64-bit integer overflow wrap-around triggers.
-- **Floating-Point Traps:** Sub-cent IEEE 754 precision skimming (`0.0000001`, `NaN`, `Infinity`).
-- **Zero & Negatives:** Exact zero bypass and negative value attacks (`-1.00`, `-500.00`).
-- **Buffer & File Ceilings:** Empty 0-byte streams, max length $+ 1$, and 10,000-character ReDoS strings.
+Every case includes a target parameter, payload, severity, expected outcome, rationale, and mitigation suggestion. These are test-design prompts: a developer or QA engineer must review them against the real application contract.
 
-### 2. 🧪 Invalid Data Types & Formats (`TypeFuzzerEngine`)
-- **Nullability & Omission:** Explicit `null` literals vs completely omitted JSON properties.
-- **Dynamic Type Juggling:** Boolean coercion (`true` evaluating to integer `1` in weakly-typed runtimes).
-- **String for Scalar:** Injected strings, arrays (`[100, 200]`), and nested objects into scalar fields.
-- **Unicode Traps:**
-  - 4-byte UTF-8 emojis (`👨‍👩‍👧‍👦🚀`) crashing databases configured with 3-byte `utf8`.
-  - Zero-width spaces (`\u200B\uFEFF`) used to spoof usernames and bypass uniqueness checks.
-  - Right-to-Left Override (`\u202E`) masking dangerous file extensions (`doc\u202Eexe.pdf`).
-- **Temporal Overflow:** Year 2038 signed 32-bit Unix epoch overflow (`2038-01-19T03:14:08Z`).
+## Quick start
 
-### 3. 🛡️ Security & Injection Vectors (`SecurityEngine` - OWASP Top 10)
-- **SQL Injection:** Tautology bypass (`' OR '1'='1' --`) and stacked queries (`1; DROP TABLE...`).
-- **Cross-Site Scripting (XSS):** Stored script injection and SVG event vectors (`<svg onload=...>`).
-- **Path Traversal & LFI:** Nested traversal (`../../../../etc/passwd`) and null-byte bypass (`avatar.png%00.php`).
-- **SSRF:** Cloud metadata exfiltration (`http://169.254.169.254/...`) and localhost port scanning.
-- **Mass Assignment:** Injecting unauthorized privilege fields (`{"role": "SUPERADMIN", "is_admin": true}`).
+### Web dashboard
 
-### 4. ⚡ State, Concurrency & Logic (`ConcurrencyEngine`)
-- **Burst Double-Submit:** 2 identical requests dispatched in a 2ms delta window to test distributed locking.
-- **Idempotency-Key Replay:** Verifies returning cached responses without duplicate side-effects.
-- **Idempotency Collision:** Reusing a key with mutated parameters triggers `HTTP 409 Conflict`.
-- **State Machine Violations:** Out-of-order mutations (e.g. attempting payout on a `CANCELLED` order).
-
----
-
-## 🚀 Quick Start
-
-### 1. Terminal CLI
 ```bash
-# Analyze a built-in industry preset
-python3 cli.py --preset fintech_transfer
-
-# Export directly to a Markdown test plan or Jira ticket table
-python3 cli.py --preset fintech_transfer --export markdown --output test_plan.md
-python3 cli.py --preset fintech_transfer --export jira --output jira_tickets.txt
-
-# Generate executable Pytest test cases
-python3 cli.py --preset fintech_transfer --export pytest --output test_transfer.py
-
-# Generate TypeScript / Jest test cases
-python3 cli.py --preset discount_coupon_api --export jest --output coupon.test.ts
-
-# Generate an executable cURL bash harness
-python3 cli.py --preset profile_avatar_upload --export curl --output test_avatar.sh
-
-# Inline feature analysis directly from terminal
-python3 cli.py --text "Endpoint POST /api/v1/users requires email and age between 18 and 65"
-```
-
-### 2. Interactive Web Dashboard
-```bash
-# Install dependencies
 npm install
-
-# Start local development server
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 3. Running Unit Tests
+Open <http://localhost:3000>. Analysis happens locally in the browser.
+
+### Python CLI
+
+Python 3.10 or newer is recommended. The core CLI has no third-party runtime dependencies.
+
 ```bash
-python3 -m unittest discover tests -v
+python cli.py --preset fintech_transfer
+python cli.py --spec requirements.md --export json
+python cli.py --text "Age must be between 18 and 65"
 ```
 
----
+Available exports are `markdown`, `jira`, `pytest`, `vitest`, `curl`, and `json`.
 
-## 📁 Repository Structure
+### Generated API test starters
 
-```
-├── cli.py                     # Standalone CLI tool
-├── edgespec/                  # Core Python engine package
-│   ├── engine.py              # Orchestration pipeline
-│   ├── models.py              # Dataclasses and type definitions
-│   ├── parser.py              # Multi-format heuristic & schema parser
-│   ├── presets.py             # Industry-standard test presets
-│   ├── engines/               # The 4 verification engines
-│   │   ├── boundary.py        # Boundary & fencepost calculations
-│   │   ├── type_fuzzer.py     # Type coercion & Unicode traps
-│   │   ├── security.py        # OWASP Top 10 attack payloads
-│   │   └── concurrency.py     # Race conditions & idempotency
-│   └── exporters/             # Multi-format test generators
-│       ├── markdown.py        # Markdown checklists & Jira tables
-│       ├── pytest_gen.py      # Executable @pytest.mark.parametrize
-│       ├── jest_gen.py        # TypeScript / Jest test suites
-│       └── curl_gen.py        # Executable bash cURL harness
-├── src/                       # React 19 + TypeScript + Tailwind Web Dashboard
-├── tests/                     # Unit test suites (100% passing)
-└── .github/workflows/ci.yml   # Multi-version Python & Node.js CI
+The Pytest and Vitest exports are deliberately configurable starters. They skip integration requests until `EDGESPEC_TARGET_URL` is set:
+
+```bash
+python -m pip install pytest requests
+export EDGESPEC_TARGET_URL="http://localhost:8000/api/users"
+pytest test_edgespec_generated.py
 ```
 
----
+On PowerShell:
 
-## 💼 Resume Bullet Points
+```powershell
+$env:EDGESPEC_TARGET_URL = "http://localhost:8000/api/users"
+pytest test_edgespec_generated.py
+```
 
-If you are featuring this project on your resume, here are tailored bullet points:
+The starter assertion treats a server error (`5xx`) as a failure. Adapt request construction, authentication, and exact status assertions to the API under test before relying on the suite.
 
-- **Full-Stack & Systems:**
-  > *"Architected and built **EdgeSpec**, a full-stack automated test vector synthesis platform (Python, TypeScript, React 19, Tailwind) that parses feature specifications into categorized boundary, type fuzzing, and OWASP security test cases."*
-- **QA Automation & Security:**
-  > *"Engineered 4 heuristic analysis engines generating exact copy-pasteable payloads for 32-bit integer overflows, IEEE 754 precision skimming, 4-byte UTF-8 emoji crashes, SQLi/SSRF injection, and double-submit race conditions."*
-- **Developer Productivity:**
-  > *"Designed an export pipeline supporting 1-click generation of executable `@pytest.mark.parametrize` suites, Jest/Vitest TypeScript stubs, cURL bash harnesses, and Jira QA tables, reducing pre-release test planning time by 80%."*
+The cURL export dispatches the generated inputs to its configured URL and prints response codes. It does not decide whether application-specific behavior is correct.
 
----
+## Development checks
 
-## 📄 License
-This project is licensed under the [MIT License](LICENSE).
+```bash
+# TypeScript typecheck and engine tests
+npm test
+
+# Production bundle
+npm run build
+
+# Python unit tests
+python -m unittest discover tests -v
+```
+
+Parser fixtures in `tests/fixtures/parser_cases.json` are exercised by both runtimes to catch behavioral drift between the browser and CLI implementations.
+
+## Architecture
+
+```text
+Specification text
+       |
+       v
+Format detection and parameter extraction
+       |
+       +---- boundary rules
+       +---- type/format rules
+       +---- selected security payloads
+       +---- request-level concurrency scenarios
+       |
+       v
+Reviewable report and export adapters
+```
+
+The TypeScript implementation powers the browser without a backend. The Python implementation powers the standalone CLI. They are intentionally independent entry points, with shared parser fixtures providing parity checks for supported inputs.
+
+Key locations:
+
+```text
+src/engine/                 TypeScript parser, generators, and exporters
+src/components/             React dashboard
+edgespec/                   Python parser and generators
+edgespec/exporters/         Python export adapters
+tests/                      Python tests and shared fixtures
+tests-ts/                   TypeScript engine tests
+cli.py                      Python command-line entry point
+```
+
+## Supported parsing scope
+
+EdgeSpec uses explicit heuristics rather than general natural-language understanding.
+
+The JSON Schema parser supports top-level `properties`, `required`, primitive `type`, `format`, `minimum`, `maximum`, `minLength`, `maxLength`, and `enum`. It does not currently resolve `$ref`, compositions such as `oneOf`, conditional schemas, nested objects, or the complete JSON Schema specification.
+
+Structured API notes are not an OpenAPI parser. They recognize an HTTP method/path plus bullet parameters in EdgeSpec's documented notation. Gherkin and user-story support similarly focus on a small set of common terms.
+
+When nothing recognizable is found, EdgeSpec creates a generic `inputPayload` string parameter so the result remains reviewable rather than silently empty.
+
+## Security scope
+
+Security cases are a curated payload library for test planning. They cover selected vulnerability classes that map to several OWASP categories, but they are not complete OWASP Top 10 coverage and are not evidence of a vulnerability.
+
+Only run generated payloads against systems you own or are explicitly authorized to test.
+
+## Built-in examples
+
+- Fintech external transfer user story
+- Avatar upload structured API notes
+- Coupon request JSON Schema
+- Checkout Gherkin scenario
+
+## License
+
+MIT. See [LICENSE](LICENSE).

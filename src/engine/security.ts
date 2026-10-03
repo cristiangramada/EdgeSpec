@@ -1,4 +1,4 @@
-import { ExtractedParam, TestCase } from '../types';
+import type { ExtractedParam, TestCase } from '../types.ts';
 
 export function generateSecurityTests(param: ExtractedParam): TestCase[] {
   const tests: TestCase[] = [];

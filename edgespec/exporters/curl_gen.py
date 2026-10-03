@@ -21,7 +21,9 @@ class CurlExporter:
 
         for idx, tc in enumerate(report.test_cases, 1):
             payload_dict = {tc.target_param: tc.payload}
-            json_payload = json.dumps(payload_dict)
+            # Safely embed apostrophes from SQL-injection payloads in a
+            # single-quoted POSIX shell string.
+            json_payload = json.dumps(payload_dict).replace("'", "'\"'\"'")
             lines.extend([
                 f"# [{idx}/{len(report.test_cases)}] {tc.severity.value.upper()} - {tc.title}",
                 f"# Expected: {tc.expected_status}",

@@ -1,9 +1,9 @@
-import { AnalysisReport, Category, TestCase } from '../types';
-import { parseSpec } from './parser';
-import { generateBoundaryTests } from './boundary';
-import { generateTypeFuzzTests } from './typeFuzzer';
-import { generateSecurityTests } from './security';
-import { generateConcurrencyTests } from './concurrency';
+import type { AnalysisReport, Category, TestCase } from '../types.ts';
+import { parseSpec } from './parser.ts';
+import { generateBoundaryTests } from './boundary.ts';
+import { generateTypeFuzzTests } from './typeFuzzer.ts';
+import { generateSecurityTests } from './security.ts';
+import { generateConcurrencyTests } from './concurrency.ts';
 
 export function runEdgeSpecAnalysis(
   rawText: string,
@@ -23,8 +23,16 @@ export function runEdgeSpecAnalysis(
     if (catSet.has('security')) {
       testCases.push(...generateSecurityTests(param));
     }
-    if (catSet.has('concurrency')) {
-      testCases.push(...generateConcurrencyTests(param));
+  }
+
+  // Concurrency scenarios describe request-level behavior, not field-level
+  // validation. Generate them once and attach them to the most relevant field.
+  if (catSet.has('concurrency')) {
+    const concurrencyTarget =
+      parameters.find((param) => param.name.toLowerCase().includes('idempotency')) ??
+      parameters[0];
+    if (concurrencyTarget) {
+      testCases.push(...generateConcurrencyTests(concurrencyTarget));
     }
   }
 

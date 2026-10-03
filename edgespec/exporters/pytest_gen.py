@@ -9,22 +9,9 @@ from edgespec.models import AnalysisReport
 class PytestExporter:
     @staticmethod
     def generate(report: AnalysisReport) -> str:
-        code = [
-            '"""',
-            "Automated Boundary & Security Edge Case Test Suite",
-            "Generated automatically by EdgeSpec Engine.",
-            '"""',
-            "",
-            "import pytest",
-            "import requests",
-            "",
-            "API_BASE_URL = 'http://localhost:8000'",
-            "",
-            "TEST_CASES = [",
-        ]
-
+        cases = []
         for tc in report.test_cases:
-            item = {
+            cases.append({
                 "id": tc.id,
                 "param": tc.target_param,
                 "category": tc.category.value,
@@ -32,28 +19,40 @@ class PytestExporter:
                 "payload": tc.payload,
                 "expected_status": tc.expected_status,
                 "title": tc.title,
-            }
-            code.append(f"    {json.dumps(item)},")
+            })
 
-        code.extend([
-            "]",
+        cases_json = json.dumps(cases, indent=2)
+        code = [
+            '"""',
+            "EdgeSpec API test starter.",
+            "",
+            "Set EDGESPEC_TARGET_URL to enable integration requests, then customize",
+            "request construction and assertions for your application's contract.",
+            '"""',
+            "",
+            "import json",
+            "import os",
+            "import pytest",
+            "import requests",
+            "",
+            "TARGET_URL = os.getenv('EDGESPEC_TARGET_URL')",
+            "",
+            f"TEST_CASES = json.loads(r'''{cases_json}''')",
             "",
             "@pytest.mark.parametrize('case', TEST_CASES, ids=lambda c: f\"{c['param']}_{c['id']}\")",
             "def test_edgespec_contract(case):",
-            '    """',
-            "    Verifies that the target endpoint correctly handles the test vector.",
-            '    """',
+            "    if not TARGET_URL:",
+            "        pytest.skip('Set EDGESPEC_TARGET_URL to run generated API tests')",
+            "",
             "    param_name = case['param']",
             "    payload_val = case['payload']",
-            "",
-            "    # Construct simulated payload",
             "    payload = {param_name: payload_val}",
             "",
-            "    # In live integration test, replace with your client call:",
-            "    # response = requests.post(f'{API_BASE_URL}/api/endpoint', json=payload)",
-            "    # assert response.status_code in [200, 400, 409, 413, 422]",
-            "    assert case['id'] is not None",
-            "    assert param_name is not None",
-        ])
+            "    response = requests.post(TARGET_URL, json=payload, timeout=10)",
+            "    assert response.status_code < 500, (",
+            "        f\"{case['id']} triggered server error {response.status_code}; \"",
+            "        f\"review expected outcome: {case['expected_status']}\"",
+            "    )",
+        ]
 
         return "\n".join(code)

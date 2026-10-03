@@ -1,4 +1,4 @@
-import { ExtractedParam, ParamType, SpecFormat } from '../types';
+import type { ExtractedParam, ParamType, SpecFormat } from '../types.ts';
 
 export function detectSpecFormat(rawText: string): SpecFormat {
   const stripped = rawText.trim();

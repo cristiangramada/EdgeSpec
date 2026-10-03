@@ -3,13 +3,10 @@ import { Header } from './components/Header';
 import { SpecEditor } from './components/SpecEditor';
 import { ResultsView } from './components/ResultsView';
 import { ExportModal } from './components/ExportModal';
-import { GitHubModal } from './components/GitHubModal';
 import { Category, AnalysisReport, SpecFormat } from './types';
 import { PRESET_OPTIONS } from './data/presets';
 import { detectSpecFormat } from './engine/parser';
 import { runEdgeSpecAnalysis } from './engine';
-import { downloadFullRepoZip } from './utils/zipRepo';
-import { Github, Sparkles, Terminal, CheckCircle2 } from 'lucide-react';
 
 export default function App() {
   const initialPreset = PRESET_OPTIONS[0];
@@ -25,8 +22,6 @@ export default function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [report, setReport] = useState<AnalysisReport | null>(null);
 
-  // Modals
-  const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   // Initial load analysis
@@ -68,36 +63,20 @@ export default function App() {
     }
   };
 
-  const handleDownloadZip = async () => {
-    await downloadFullRepoZip();
-  };
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
       {/* Top Header */}
       <Header
-        onOpenGitHubModal={() => setIsGitHubModalOpen(true)}
-        onDownloadZip={handleDownloadZip}
         onOpenExportModal={() => setIsExportModalOpen(true)}
         hasResults={Boolean(report && report.testCases.length > 0)}
       />
 
-      {/* GitHub Callout Banner */}
-      <div className="bg-gradient-to-r from-indigo-950/80 via-slate-900 to-slate-950 border-b border-indigo-500/20 px-4 py-2.5">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
-          <div className="flex items-center space-x-2 text-indigo-200">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-400" />
-            <span>
-              <strong>Resume-Ready Project:</strong> Full Python CLI, 4 heuristic engines, unit tests, and GitHub Actions CI workflow are built in.
-            </span>
-          </div>
-          <button
-            onClick={() => setIsGitHubModalOpen(true)}
-            className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 font-medium transition cursor-pointer"
-          >
-            <Github className="w-3.5 h-3.5" />
-            <span>See Step-by-Step GitHub Push Guide</span>
-          </button>
+      <div className="border-b border-slate-800 bg-slate-900/60 px-4 py-2.5">
+        <div className="max-w-7xl mx-auto flex items-center gap-2 text-xs text-slate-300">
+          <span className="flex h-2 w-2 rounded-full bg-emerald-400" />
+          <span>
+            Deterministic, rule-based analysis runs locally in your browser. Specifications are not uploaded.
+          </span>
         </div>
       </div>
 
@@ -137,26 +116,14 @@ export default function App() {
       <footer className="border-t border-slate-900 bg-slate-950/60 py-6 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div>
-            EdgeSpec • Technical Edge-Case Synthesis Engine • Licensed under MIT
+            EdgeSpec • Rule-based test-design assistant • MIT License
           </div>
           <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setIsGitHubModalOpen(true)}
-              className="hover:text-indigo-400 transition cursor-pointer"
-            >
-              GitHub Setup
-            </button>
-            <button
-              onClick={handleDownloadZip}
-              className="hover:text-indigo-400 transition cursor-pointer"
-            >
-              Download Repo (.zip)
-            </button>
             <button
               onClick={() => setIsExportModalOpen(true)}
               className="hover:text-indigo-400 transition cursor-pointer"
             >
-              Export Code Stubs
+              Export test artifacts
             </button>
           </div>
         </div>
@@ -167,11 +134,6 @@ export default function App() {
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         report={report}
-      />
-
-      <GitHubModal
-        isOpen={isGitHubModalOpen}
-        onClose={() => setIsGitHubModalOpen(false)}
       />
     </div>
   );

@@ -19,7 +19,7 @@ from edgespec.exporters.curl_gen import CurlExporter
 
 def main():
     parser = argparse.ArgumentParser(
-        description="EdgeSpec: Synthesize boundary, data-type fuzzing, and OWASP security test vectors from specifications."
+        description="EdgeSpec: Generate reviewable boundary, malformed-input, security, and concurrency test ideas."
     )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--preset", choices=list(PRESETS.keys()), help="Run analysis on a built-in industry preset.")
@@ -28,7 +28,7 @@ def main():
 
     parser.add_argument(
         "--export",
-        choices=["markdown", "jira", "pytest", "jest", "curl", "json"],
+        choices=["markdown", "jira", "pytest", "vitest", "curl", "json"],
         default="markdown",
         help="Output format (default: markdown).",
     )
@@ -76,7 +76,7 @@ def main():
         result = MarkdownExporter.to_jira(report)
     elif args.export == "pytest":
         result = PytestExporter.generate(report)
-    elif args.export == "jest":
+    elif args.export == "vitest":
         result = JestExporter.generate(report)
     elif args.export == "curl":
         result = CurlExporter.generate(report)

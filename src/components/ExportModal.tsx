@@ -5,7 +5,7 @@ import {
   exportToMarkdown,
   exportToJira,
   exportToPytest,
-  exportToJest,
+  exportToVitest,
   exportToCurl,
 } from '../engine/exporters';
 
@@ -15,7 +15,7 @@ interface ExportModalProps {
   report: AnalysisReport | null;
 }
 
-type ExportTab = 'markdown' | 'jira' | 'pytest' | 'jest' | 'curl' | 'json';
+type ExportTab = 'markdown' | 'jira' | 'pytest' | 'vitest' | 'curl' | 'json';
 
 export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, report }) => {
   const [activeTab, setActiveTab] = useState<ExportTab>('markdown');
@@ -43,9 +43,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, repor
           filename: 'test_edgespec_generated.py',
           mime: 'text/x-python',
         };
-      case 'jest':
+      case 'vitest':
         return {
-          text: exportToJest(report),
+          text: exportToVitest(report),
           filename: 'edgespec.test.ts',
           mime: 'text/typescript',
         };
@@ -94,7 +94,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, repor
             <div>
               <h2 className="text-base font-semibold text-slate-100">Export Test Suite Matrix</h2>
               <p className="text-xs text-slate-400">
-                Generate ready-to-run automation code, Jira tables, or QA checklists.
+                Export review artifacts and configurable API test starters.
               </p>
             </div>
           </div>
@@ -111,8 +111,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, repor
           {[
             { id: 'markdown', label: 'Markdown Table' },
             { id: 'jira', label: 'Jira Wiki' },
-            { id: 'pytest', label: 'Pytest (Python)' },
-            { id: 'jest', label: 'Jest / Vitest (TS)' },
+            { id: 'pytest', label: 'Pytest Starter' },
+            { id: 'vitest', label: 'Vitest Starter' },
             { id: 'curl', label: 'cURL Harness' },
             { id: 'json', label: 'Raw JSON' },
           ].map((tab) => (

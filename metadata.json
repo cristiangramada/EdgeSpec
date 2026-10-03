@@ -1,6 +1,5 @@
 {
-  "name": "EdgeSpec - Technical Test & Boundary Case Synthesis Engine",
-  "description": "Automated boundary case, data type fuzzing, and OWASP security test payload synthesis engine for software specifications.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "name": "EdgeSpec - Rule-based Test Design Assistant",
+  "description": "Generate reviewable boundary, malformed-input, security, and concurrency test ideas from lightweight software specifications.",
+  "requestFramePermissions": []
 }

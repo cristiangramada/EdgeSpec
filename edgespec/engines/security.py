@@ -1,6 +1,8 @@
 """
 Security & Injection Vectors Engine:
-Generates OWASP Top 10 vectors: SQLi, NoSQLi, XSS, Path Traversal, SSRF, IDOR, and Mass Assignment.
+Generates selected security review payloads for SQL injection, XSS, path
+traversal, SSRF, and mass assignment. This is not a vulnerability scanner or
+complete OWASP coverage.
 """
 
 from typing import List

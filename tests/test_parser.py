@@ -1,9 +1,21 @@
 import unittest
+import json
+from pathlib import Path
 from edgespec.parser import SpecParser
 from edgespec.models import SpecFormat, ParamType
 
 
 class TestSpecParser(unittest.TestCase):
+    def test_shared_parser_fixtures(self):
+        fixture_path = Path(__file__).parent / "fixtures" / "parser_cases.json"
+        cases = json.loads(fixture_path.read_text(encoding="utf-8"))
+
+        for case in cases:
+            with self.subTest(case=case["name"]):
+                fmt, params = SpecParser.parse(case["input"])
+                self.assertEqual(fmt.value, case["format"])
+                self.assertEqual([p.name for p in params], case["parameters"])
+
     def test_json_schema_detection(self):
         schema = '{"title": "User", "properties": {"age": {"type": "integer"}}}'
         fmt, params = SpecParser.parse(schema)

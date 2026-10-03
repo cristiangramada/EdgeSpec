@@ -1,0 +1,6 @@
+{
+  "name": "EdgeSpec - Technical Test & Boundary Case Synthesis Engine",
+  "description": "Automated boundary case, data type fuzzing, and OWASP security test payload synthesis engine for software specifications.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
